@@ -18,7 +18,8 @@ def main():
         sys.exit(0)
 
     # Initialize board and view
-    board = Board(9)
+    size = 9
+    board = Board(size)
     view = View(board)
     err = None
 
@@ -61,6 +62,14 @@ def main():
         board._flip_turn()      #Toggle turn
         view.redraw()
 
+    def count():
+        """
+        Count the final score of the game
+        """
+        a = board.count_score(size)
+        sys.stdout.write('Final score is: %s' % a)
+        sys.stdout.write('\n')
+        exit()
 
     
     def exit():
@@ -81,6 +90,7 @@ def main():
         'u': undo,
         'r': redo,
         'p': passing,
+        'c': count,
         '\x1b': exit,
     }
 

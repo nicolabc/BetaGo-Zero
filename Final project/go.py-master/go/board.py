@@ -329,3 +329,30 @@ class Board(Array):
         coordinates.
         """
         return len(self.get_liberties(x, y))
+
+    def count_score(self,size):
+        """
+        Computes the final score for black
+        """
+        liberties = 0
+        a = set()
+        for i in range(1,size+1):
+            for j in range(1, size+1):
+                #liberties += self.count_liberties(j,i)
+                #print(liberties)
+                
+                #a = set.update(self.get_liberties(j,i))
+                #print(self.get_liberties(j,i))
+                temp = self.count_liberties(j,i)
+                print(temp)
+                if temp > 1: #The question is why we get 1 liberty when there are no stones placed...
+                    liberties += temp
+        
+        print(liberties)
+
+        """
+        The logic is: area + number of pieces = total score
+        (For the respective color)
+        """
+
+        return liberties
