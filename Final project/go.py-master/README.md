@@ -20,3 +20,5 @@ Standard `W`, `A`, `S`, and `D` to move the cursor.  `SPACE` to make a move.  `U
 
 Please take a moment to review the software license as specified in the
 `LICENSE.md` file.
+
+#Thanks to https://github.com/davesque/go.py

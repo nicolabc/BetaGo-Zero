@@ -22,12 +22,12 @@ def main():
     view = View(board)
     err = None
 
-    board.move(3,3)
-    view.redraw()
-    board.move(4,4)
-    view.redraw()
-    board.move(1,1)
-    board.move(1,1)
+    #board.move(3,3)
+    #view.redraw()
+    #board.move(4,4)
+    #view.redraw()
+    #board.move(1,1)
+    #board.move(1,1)
     view.redraw()
     
     # User actions
@@ -53,11 +53,23 @@ def main():
         board.redo()
         view.redraw()
 
+    def passing():
+        """
+        Pass the turn to the next player
+        """
+        board._push_history()   #Add move to history
+        board._flip_turn()      #Toggle turn
+        view.redraw()
+
+
+    
     def exit():
         """
         Exits the game.
         """
         sys.exit(0)
+
+    
 
     # Action keymap
     KEYS = {
@@ -68,16 +80,18 @@ def main():
         ' ': move,
         'u': undo,
         'r': redo,
+        'p': passing,
         '\x1b': exit,
     }
 
     # Main loop
     while True:
         # Print board
-        clear()
+        clear()            #Clears the board
         sys.stdout.write('{0}\n'.format(view))
         sys.stdout.write('Black: {black} <===> White: {white}\n'.format(**board.score))
         sys.stdout.write('{0}\'s move... '.format(board.turn))
+        sys.stdout.write('\n')
 
         if err:
             sys.stdout.write('\n' + err + '\n')
