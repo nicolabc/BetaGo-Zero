@@ -332,12 +332,12 @@ class Board(Array):
 
     def count_score(self,size):
         """
-        Computes the final score for black
+        Computes the final score for each player
         """
-        liberties = 0
+        """liberties = 0
         a = set()
-        for i in range(1,size+1):
-            for j in range(1, size+1):
+        for i in range(0,size):
+            for j in range(0, size):
                 #liberties += self.count_liberties(j,i)
                 #print(liberties)
                 
@@ -349,10 +349,187 @@ class Board(Array):
                     liberties += temp
         
         print(liberties)
-
+        """
+        global non_groups
+        global o_points
+        global x_points
+    
+        ## Creates a list of groups (non_groups) of empty positions.
+        for i in range(0,size):
+            for j in range(0,size):
+                if self[j][i] == '.':
+                    new = 1
+                    for group in non_groups:
+                        if [i,j] in self.gperm(group,size):
+                            group.append([i,j])
+                            new = 0
+                    if new == 1:
+                        non_groups.append([[i,j]])
+        self.concat('.')
+    
+        o_points = 0
+        x_points = 0
+    
+        ## Gives a point to the each player for every pebble they have
+        ## on the board.
+        for group in o_groups:
+            o_points += len(group)
+        for group in x_groups:
+            x_points += len(group)
+    
+        ## The permimeter of these empty positions is here considered,
+        ## and if every position in the permimeter of a non_group is
+        ## one player or the other, that player gains a number of points
+        ## equal to the length of that group (the number of positions
+        ## that their pieces enclose).
+        for group in non_groups:
+            no = 0
+            for element in self.gperm(group,size):
+                if self[element[1]][element[0]] != 'o':
+                    no = 1
+            if no == 0:
+                o_points += len(group)
+    
+        for group in non_groups:
+            no = 0
+            for element in self.gperm(group,size):
+                if self[element[1]][element[0]] != '*':
+                    no = 1
+            if no == 0:
+                x_points += len(group)
         """
         The logic is: area + number of pieces = total score
-        (For the respective color)
-        """
+        (For the respective color)"""
+        return x_points,o_points
+        
 
-        return liberties
+        #return liberties, 0
+    ## Returns a list of the board positions surrounding the
+    ## passed group.
+    def gperm(self,group,size):
+        permimeter = []
+        size
+        hit = 0
+        loss = 0
+        ## Adds permimeter spots below
+        ## Works by looking from top to bottom, left to right,
+        ## at each posisition on the board.  When a posistion
+        ## is hit that is in the given group, I set hit = 1.
+        ## Then, at the next position that is not in that group,
+        ## or if the end of the column is reached, I set loss = 1.
+        ## That point is the first point below a point in that group,
+        ## so it is part of the permieter of that group.
+        i = 0
+        j = 0
+        while i < size:
+            j = 0
+            hit = 0
+            while j < size:
+                if [i,j] in group:
+                    hit = 1
+                elif (hit == 1) & ([i,j] not in group):
+                    loss = 1
+                if (hit == 1) & (loss == 1):
+                    permimeter.append([i,j])
+                    hit = 0
+                    loss = 0
+                j += 1
+            i += 1
+        ## Adds permimeter spots to the right
+        i = 0
+        j = 0
+        while i < size:
+            j = 0
+            hit = 0
+            while j < size:
+                if [j,i] in group:
+                    hit = 1
+                elif (hit == 1) & ([j,i] not in group):
+                    loss = 1
+                if (hit == 1) & (loss == 1):
+                    permimeter.append([j,i])
+                    hit = 0
+                    loss = 0
+                j += 1
+            i += 1
+        ## Adds permimeter spots above
+        i = 0
+        j = size-1
+        while i < size:
+            j = size-1
+            hit = 0
+            while j >= 0:
+                if [i,j] in group:
+                    hit = 1
+                elif (hit == 1) & ([i,j] not in group):
+                    loss = 1
+                if (hit == 1) & (loss == 1):
+                    permimeter.append([i,j])
+                    hit = 0
+                    loss = 0
+                j -= 1
+            i += 1
+        ## Adds permimeter spots to the left
+        i = 0
+        j = size-1
+        while i < size:
+            j = size-1
+            hit = 0
+            while j >= 0:
+                if [j,i] in group:
+                    hit = 1
+                elif (hit == 1) & ([j,i] not in group):
+                    loss = 1
+                if (hit == 1) & (loss == 1):
+                    permimeter.append([j,i])
+                    hit = 0
+                    loss = 0
+                j -= 1
+            i += 1
+        return permimeter
+    ## Checks if any groups contain the same point;
+    ## if so, joins them into one group
+    def concat(self,xoro):
+        global o_groups
+        global x_groups
+        global non_groups
+        if xoro == 'o':
+            groups = o_groups
+        elif xoro == 'x':
+            groups = x_groups
+        else:
+            groups = non_groups
+        i = 0
+        ## currentgroups and previousgroups are used to compare the number
+        ## of groups before this nest of whiles to the number after.  If
+        ## The number is the same, then nothing needed to be concatinated,
+        ## and we can move on.  If the number is different, two groups
+        ## were concatinated, and we need to run through this nest again
+        ## to see if any other groups need to be joined together.
+        currentgroups = len(groups)
+        previousgroups = currentgroups + 1
+        ## Checks if the positions contained in any group are to be
+        ## found in any other group.  If so, all elements of the second are
+        ## added to the first, and the first is deleted.
+        while previousgroups != currentgroups:
+            while i < len(groups)-1:
+                reset = 0
+                j = i + 1
+                while j < len(groups):
+                    k = 0
+                    while k < len(groups[i]):
+                        if groups[i][k] in groups[j]:
+                            for element in groups[j]:
+                                if element not in groups[i]:
+                                    groups[i].append(element)
+                            groups.remove(groups[j])
+                            reset = 1
+                        if reset == 1:
+                            break
+                        k += 1
+                    j += 1
+                if reset == 1:
+                    i = -1
+                i += 1
+            previousgroups = currentgroups
+            currentgroups = len(groups)

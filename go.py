@@ -5,7 +5,7 @@ import sys
 
 from go import Board, BoardError, View, clear, getch
 
-
+global non_groups
 def main():
     # Get arguments
     parser = argparse.ArgumentParser(description='Starts a game of go in the terminal.')
@@ -22,13 +22,15 @@ def main():
     board = Board(size)
     view = View(board)
     err = None
+    global non_groups
+    non_groups = []
 
     #board.move(3,3)
     #view.redraw()
     #board.move(4,4)
     #view.redraw()
     #board.move(1,1)
-    #board.move(1,1)
+    board.move(0,0)
     view.redraw()
     
     # User actions
@@ -66,8 +68,10 @@ def main():
         """
         Count the final score of the game
         """
-        a = board.count_score(size)
-        sys.stdout.write('Final score is: %s' % a)
+        a,b = board.count_score(size)
+        sys.stdout.write('Final score * is: %s' % a)
+        sys.stdout.write('\n')
+        sys.stdout.write('Final score o is: %s' % b)
         sys.stdout.write('\n')
         exit()
 
