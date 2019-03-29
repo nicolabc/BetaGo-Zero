@@ -394,8 +394,10 @@ def turn():
             hold = 0
         ## If the player doesn't pass...
         else:
-            player1_pass = 0
-            player2_pass = 0
+            if xoro == 'o':
+                player1_pass = 0
+            else:
+                player2_pass = 0
             prev_o_groups = deepcopy(o_groups)
             prev_x_groups = deepcopy(x_groups)
             prev_non_groups = deepcopy(non_groups)
@@ -573,7 +575,7 @@ def main():
     else:
         print('tie')
 
-def playFullGame(net1,net2):
+def playFullGame(net1,net2,printProgress):
     """
     Plays an entire game for network architecture 1 and 2 
     and returns a value stating which network won
@@ -629,71 +631,87 @@ def playFullGame(net1,net2):
     ## Gives players turns until the end of the game
     ## (that is, until both players pass, one after
     ## the other)
+    p1Passed = False
+    p2Passed = False
     while gameover != 1:
+        
  
         ## Set it as o-player's turn
         xoro = 'o'
         notxoro = 'x'
-        print()
-        printboard(gsc)
+        if(printProgress):
+
+            print()
+            printboard(gsc)
 
         isLegalMove = 0
         nrOfTries = 0
-        
-        print("o is thinking [...]")
+        if(printProgress):
+            print("o is thinking [...]")
+        moves = net1.forwardPass(gsc)
+        moves = moves[0]
+        smallestVal = moves[np.argmin(moves)]-1000000
         while(isLegalMove==0):
-            nrOfTries += 1
-            if nrOfTries > 50:
-                xy = [0,boardsize] #The agent selects pass
-                isLegalMove = networkTurn(xy)
-                
-                break             
-            #While a move selected is illegal, choose another one
-            moves = net1.forwardPass(gsc) #Pass the board through the network. Moves is an 82-length array corresponding to which move to make
-            myMove = moves #np.argmax(moves) <-- Change to this when changed to list
+            myMove = np.argmax(moves) #<-- Change to this when changed to list
             xy = unflatten(myMove)          #Returns list in [x,y]-coordinates
             isLegalMove = networkTurn(xy)
-            
-        print('o selects: ',xy)
+            if(isLegalMove == False):
+                moves[myMove]=smallestVal
+        if(printProgress):    
+            print('o selects: ',xy)
+        if(xy == [0,9]):
+            p1Passed = True
+        else:
+            p1Passed = False
                          #Place the turn at [x,y]
         net1.updateBoard(gsc)           #Updates the board history
 
-        if gameover == 1:
+        if gameover == 1 or (p1Passed and p2Passed):
+            gameover = 1
             break
  
         ## Sets it as x-player's turn
         xoro = 'x'
         notxoro = 'o'
-        print()
-        printboard(gsc)
+        if(printProgress):
+            print()
+            printboard(gsc)
 
         isLegalMove = 0
         nrOfTries = 0
-        
-        print("x is thinking [...]")
+        if(printProgress):
+            print("x is thinking [...]")
+        moves = net2.forwardPass(gsc)
+        moves = moves[0]
+        smallestVal = moves[np.argmin(moves)]-1000000
         while(isLegalMove==0):
-            nrOfTries += 1
-            if nrOfTries > 50:
-                xy = [0,boardsize] #The agent selects pass
-                isLegalMove = networkTurn(xy)
-                break             
-            #While a move selected is illegal, choose another one
-            moves = net2.forwardPass(gsc) #Pass the board through the network. Moves is an 82-length array corresponding to which move to make
-            myMove = moves #np.argmax(moves) <-- Change to this when changed to list
+            myMove = np.argmax(moves) #<-- Change to this when changed to list
             xy = unflatten(myMove)          #Returns list in [x,y]-coordinates
             isLegalMove = networkTurn(xy)
+            if(isLegalMove == False):
+                moves[myMove]=smallestVal
+        if(printProgress):
+            print('x selects: ',xy)
 
-        print('x selects: ',xy)
+        net2.updateBoard(gsc)
 
-        net2.updateBoard(gsc)           #Updates the board history
- 
+        if(xy == [0,9]):
+            p2Passed = True
+        else:
+            p2Passed = False
+
+        if gameover == 1 or (p1Passed and p2Passed):
+            gameover = 1
+            break           #Updates the board history
+        
     ## Counts the score of both players
     count()
-    print()
-    print('final board:')
-    print()
-    printboard(gsc)
-    print()
+    if(printProgress):
+        print()
+        print('final board:')
+        print()
+        printboard(gsc)
+        print()
     
     ## Determines the winner
     if o_points-komi > x_points:
@@ -849,7 +867,7 @@ def checkIfLegal(xy):
         for group in restore_x:
             x_groups.append(group)
         return 0
-
+'''
 class Network:
     def __init__(self, boardsize):
         self.size = boardsize
@@ -882,3 +900,4 @@ while gameon == 1:
             hold = 0
         else:
             print('invalid')
+'''
