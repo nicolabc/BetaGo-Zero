@@ -413,10 +413,7 @@ def turn():
             ## are capture (until edited does not change
             ## to 1)
             edited = 0
-
-            #stonesInCurrentBoard = sum(i.count(xoro) for i in gsf)
             
-
             while minihold == 1:
                 restore_o = []
                 restore_x = []
@@ -432,13 +429,7 @@ def turn():
             ## Checks to see if the move, given all the
             ## captures it causes, would return the board
             ## to a previous game state.
-                """
-                stonesInFutureBoard = sum(i.count(xoro) for i in gsf)
                 
-                print(stonesInFutureBoard)
-                print(stonesInCurrentBoard)
-                ifstonesInFutureBoard >= stonesInCurrentBoard:
-                """ 
                 if goodmove() == 1:
                     #This means that the move increases the number of the player's stone
                     #Don't concatenate this if with the if above. Will cause suicide to fail.  
@@ -450,10 +441,6 @@ def turn():
                 ## restore the o_ and x_groups lists.
                 else:
                     print('invalid move - returns board to a previous state')
-                    """for group in restore_o:
-                        o_groups.append(group)
-                    for group in restore_x:
-                        x_groups.append(group)"""
                     o_groups = deepcopy(prev_o_groups)
                     x_groups = deepcopy(prev_x_groups)
                     non_groups = deepcopy(prev_non_groups)
@@ -591,7 +578,7 @@ def playFullGame(net1,net2):
     Plays an entire game for network architecture 1 and 2 
     and returns a value stating which network won
     """
-    komi = 5.5
+    komi = 7.5
     ## Either 'o' or 'x', determines who's turn it is
     global xoro
     ## The opposite of xoro, determines who's turn it is not
@@ -647,24 +634,28 @@ def playFullGame(net1,net2):
         ## Set it as o-player's turn
         xoro = 'o'
         notxoro = 'x'
+        print()
         printboard(gsc)
 
         isLegalMove = 0
         nrOfTries = 0
-        print()
+        
         print("o is thinking [...]")
-        while(isLegalMove==0):              
+        while(isLegalMove==0):
+            nrOfTries += 1
+            if nrOfTries > 50:
+                xy = [0,boardsize] #The agent selects pass
+                isLegalMove = networkTurn(xy)
+                
+                break             
             #While a move selected is illegal, choose another one
             moves = net1.forwardPass(gsc) #Pass the board through the network. Moves is an 82-length array corresponding to which move to make
             myMove = moves #np.argmax(moves) <-- Change to this when changed to list
             xy = unflatten(myMove)          #Returns list in [x,y]-coordinates
-            isLegalMove = checkIfLegal(xy)
-            nrOfTries += 1
-            if nrOfTries > 50:
-                xy = [0,boardsize] #The agent selects pass
-                break
+            isLegalMove = networkTurn(xy)
+            
         print('o selects: ',xy)
-        networkTurn(xy)                 #Place the turn at [x,y]
+                         #Place the turn at [x,y]
         net1.updateBoard(gsc)           #Updates the board history
 
         if gameover == 1:
@@ -673,24 +664,27 @@ def playFullGame(net1,net2):
         ## Sets it as x-player's turn
         xoro = 'x'
         notxoro = 'o'
+        print()
         printboard(gsc)
 
         isLegalMove = 0
         nrOfTries = 0
-        print()
+        
         print("x is thinking [...]")
         while(isLegalMove==0):
-            moves = net2.forwardPass(gsc) #Pass the board through the network. Moves is an 82-length array corresponding to which move to make
-            myMove = moves#np.argmax(moves)  <-- Change to this when changed to list
-            xy = unflatten(myMove)          #Returns list in [x,y]-coordinates
-            isLegalMove = checkIfLegal(xy)
             nrOfTries += 1
             if nrOfTries > 50:
                 xy = [0,boardsize] #The agent selects pass
-                print("Too many tries, pass")
-                break
-        networkTurn(xy)
+                isLegalMove = networkTurn(xy)
+                break             
+            #While a move selected is illegal, choose another one
+            moves = net2.forwardPass(gsc) #Pass the board through the network. Moves is an 82-length array corresponding to which move to make
+            myMove = moves #np.argmax(moves) <-- Change to this when changed to list
+            xy = unflatten(myMove)          #Returns list in [x,y]-coordinates
+            isLegalMove = networkTurn(xy)
+
         print('x selects: ',xy)
+
         net2.updateBoard(gsc)           #Updates the board history
  
     ## Counts the score of both players
@@ -700,18 +694,22 @@ def playFullGame(net1,net2):
     print()
     printboard(gsc)
     print()
-    print('o points: ',str(o_points))
-    print('x points: ',str(x_points))
+    
     ## Determines the winner
-    if o_points > x_points-komi:
+    if o_points-komi > x_points:
         print('o wins')
-    elif x_points-komi > o_points:
+    elif x_points > o_points-komi:
         print('x wins')
     else:
         print('tie')
 
-
-    return [x_points-komi,o_points]
+    if o_points-komi < 0:
+        print('o points: ',str(0))
+        print('x points: ',str(x_points))
+        return [0,o_points]
+    print('o points: ',str(o_points-komi))
+    print('x points: ',str(x_points))
+    return [o_points-komi,x_points]
 
 def unflatten(i):
     x = i % boardsize    # % is the "modulo operator", the remainder of i / boardsize;
@@ -728,70 +726,87 @@ def networkTurn(xy):
     global player1_pass
     global player2_pass
     global gameover
-    global nrIllegalMoves
-    hold = 1
-    while hold == 1:
-        #print()
-        #print('place for '+xoro)
-        ## By calling selectmove(), the player
-        ## is given the option of whether to place
-        ## a piece or to pass, and where to place
-        ## that piece.
-        #xy = selectmove(xoro)
-        if xy[1] == boardsize: #If the y coordinate is boardsize, then we know that this is the nxn+1 move, which is pass
-            if xoro == 'o':
-                player1_pass = 1
-            else:
-                player2_pass = 1
-            hold = 0
-        ## If the player doesn't pass...
+    global gscache
+    global gsc
+    global gsp
+    global gsf
+    global o_groups
+    global x_groups
+    global non_groups
+    legalMove = 0
+    x,y = xy
+    if y == boardsize:  #If the y coordinate is boardsize, then we know that this is the nxn+1 move, which is pass
+        if xoro == 'o':
+            player1_pass = 1
         else:
-            player1_pass = 0
-            player2_pass = 0
-            ## The new piece is added to its group,
-            ## or a new group is created for it.
-            addpoint(xy,xoro)
-            ## Groups that have been connected by
-            ## the this placement are joined together
-            concat(xoro)
-            minihold = 1
-            ## Edited is a value used to check
-            ## whether any capture is made.  capture()
-            ## is called as many times as until no pieces
-            ## are capture (until edited does not change
-            ## to 1)
-            edited = 0
-            while minihold == 1:
-                restore_o = []
-                restore_x = []
-                capture(xoro)
-                capture(notxoro)
-                if edited == 0:
-                    minihold = 0
-                    edited = 0
-                else:
-                    edited = 0
-            hold = 0
-            """## Checks to see if the move, given all the
-            ## captures it causes, would return the board
-            ## to a previous game state.
+            player2_pass = 1
+        legalMove = 1 #Legal move
+    ## If the player doesn't pass...
+    elif gsc[y][x] != '-': #If the move tries to put a stone on a nonempty region, this is by definition againts the rules
+        legalMove = 0
+    else:
+        player1_pass = 0
+        player2_pass = 0
+        prev_o_groups = deepcopy(o_groups)
+        prev_x_groups = deepcopy(x_groups)
+        prev_non_groups = deepcopy(non_groups)
+        ## The new piece is added to its group,
+        ## or a new group is created for it.
+        addpoint(xy,xoro)
+        ## Groups that have been connected by
+        ## the this placement are joined together
+        
+        concat(xoro)
+        minihold = 1
+        ## Edited is a value used to check
+        ## whether any capture is made.  capture()
+        ## is called as many times as until no pieces
+        ## are capture (until edited does not change
+        ## to 1)
+        edited = 0
+        
+        while minihold == 1:
+            restore_o = []
+            restore_x = []
+            capture(xoro)
+            
+            if edited == 0:
+                minihold = 0
+                edited = 0
+            else:
+                edited = 0
+        #Check wether the newly placed stone will result in no liberties for the group --> suicide. Continue if no suicide move
+        if (checkForSuicide(xoro) == 0):
+        ## Checks to see if the move, given all the
+        ## captures it causes, would return the board
+        ## to a previous game state.
+            
             if goodmove() == 1:
-                hold = 0
+                #This means that the move increases the number of the player's stone
+                legalMove = 1
+                    
             ## If the move is invalid, the captured groups need
             ## to be returned to the board, so we use
             ## the groups stored in the restore lists to
             ## restore the o_ and x_groups lists.
             else:
-                #print('invalid move - that returns to board to a previous state')
-                nrIllegalMoves+=1
-                printboard(gsc)
-                print(nrIllegalMoves)
-                for group in restore_o:
-                    o_groups.append(group)
-                for group in restore_x:
-                    x_groups.append(group)"""
+                #print('invalid move - returns board to a previous state')
+                o_groups = deepcopy(prev_o_groups)
+                x_groups = deepcopy(prev_x_groups)
+                non_groups = deepcopy(prev_non_groups)
+                gsf = deepcopy(gsc)
+                legalMove = 0
+        else:
+            #print('invalid move - suicide')
+            o_groups = deepcopy(prev_o_groups)
+            x_groups = deepcopy(prev_x_groups)
+            non_groups = deepcopy(prev_non_groups)
+            gsf = deepcopy(gsc)
+            legalMove = 0
+
     if (player1_pass == 1) & (player2_pass == 1):
         gameover = 1
+    return legalMove
 
 # Check if the move xy is legal
 def checkIfLegal(xy):
@@ -812,10 +827,7 @@ def checkIfLegal(xy):
     ## captures it causes, would return the board
     ## to a previous game state.
     if goodmove() == 1:
-        stonesInFutureBoard = sum(i.count(xoro) for i in gsf)
-        stonesInCurrentBoard = sum(i.count(xoro) for i in gsc)
-        print(stonesInFutureBoard)
-        print(stonesInCurrentBoard)
+        
         if stonesInFutureBoard < stonesInCurrentBoard: #This means that the move reduces the number of the player's stone.
             for group in restore_o:
                 o_groups.append(group)
@@ -858,8 +870,8 @@ while gameon == 1:
     #print(np.random.randint(0,boardsize*boardsize+1))
     net1 = Network(boardsize)
     net2 = Network(boardsize)
-    #playFullGame(net1,net2)
-    main()
+    playFullGame(net1,net2)
+    #main()
     hold = 1
     while hold == 1:
         yn = input('play again (y/n)? ')
