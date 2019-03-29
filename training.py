@@ -28,7 +28,7 @@ def PlayOneGame(network1,network2,pringProgress):
 	network1.initForMatch(True)
 	network2.initForMatch(False)
 	#plays one game, call here, get results 
-	print("PLAYING : ",network1.name," VS ",network2.name)
+	#print("PLAYING : ",network1.name," VS ",network2.name)
 	n1won,n2won = go.playFullGame(network1,network2,pringProgress)
 	
 	if(n1won>n2won):
@@ -127,10 +127,12 @@ for net in thisdict.keys():
 	print(net.name)
 
 epoch = 0
+grandEpoch = 0
 print("TRAINING")
 while(epoch < 20):
 	
 	thisdict = PlayAll(thisdict)
+	print("CURRENT EPOCH ",grandEpoch)
 	print("SCORES ")
 	for net in thisdict.keys():
 		print(net.name, " score: ",thisdict[net])
@@ -153,6 +155,7 @@ while(epoch < 20):
 	thisdict = PerformCloning(thisdict)
 	thisdict = PerformMutation(thisdict)
 	epoch += 1
+	grandEpoch+=1
 	print(epoch)
 	print("____NAMES Post____")
 	for net in thisdict.keys():
