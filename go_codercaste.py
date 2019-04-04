@@ -724,7 +724,7 @@ def playFullGame(net1,net2,printProgress):
     if o_points-komi < 0:
         print('o points: ',str(0))
         print('x points: ',str(x_points))
-        return [0,o_points]
+        return [0,x_points]
     print('o points: ',str(o_points-komi))
     print('x points: ',str(x_points))
     return [o_points-komi,x_points]

@@ -21,6 +21,24 @@ def InitializeNetworks(amount):
 
 	return networkDict
 
+#loads saved networks
+def LoadNetworks(loadAmount,cloneFactor):
+	networkdict = {}
+	for i in range(0,loadAmount):
+		net = network.Network()
+		
+		net.mynet.load_state_dict(torch.load("saves2/net"+str(i)+".pth"))
+		net.mynet.eval()
+
+		
+		networkdict[net] = 0.0
+		
+		for g in range(0,cloneFactor):
+			cloneModel = net.clone()
+			networkdict[cloneModel] = 0.0
+	return networkdict
+
+
 #Play a game between two networks
 #returns 1,0 of 1 won and 0,1 if 2 won
 def PlayOneGame(network1,network2,pringProgress):
@@ -117,11 +135,41 @@ def PerformMutation(networkdict):
 #print(board)
 #print(newNet.forwardPass(board))
 #print(createNewCNN().mutate())
+'''
+net2 = network.Network()
+		
+net2.mynet.load_state_dict(torch.load("saves2/net"+str(0)+".pth"))
+net2.mynet.eval()
 
+net1 = network.Network()
+net1.mynet = network.TwoLayerNet()
+net1.historyLen = 3
+net1.featuresDim = 7
+net1.mynet.load_state_dict(torch.load("saves/net0.pth"))
 
+n1,n2=PlayOneGame(net1,net2,True)
+won1 = n1
+won2 = n2
+n2,n1=PlayOneGame(net2,net1,True)
+won1 += n1
+won2 += n2
 
-thisdict = InitializeNetworks(10)
+print("RESULT")
+print(won1, "  ", won2)
+'''
 
+#thisdict = InitializeNetworks(10)
+
+thisdict = LoadNetworks(10,1)
+#print(len(thisdict))
+
+networks = list(thisdict.keys())
+print("SAMPLE")
+PlayOneGame(networks[0],networks[1],True)
+print("SAMPLE")
+PlayOneGame(networks[1],networks[0],True)
+
+#thisdict = PerformMutation(thisdict)
 print("NAMES")
 for net in thisdict.keys():
 	print(net.name)
@@ -149,7 +197,7 @@ while(epoch < 20):
 		PlayOneGame(networks[1],networks[0],True)
 		epoch = 0
 		for i in range(0,len(networks)):
-			torch.save(networks[i].mynet.state_dict(), "saves/net"+str(i)+".pth")
+			torch.save(networks[i].mynet.state_dict(), "saves2/net"+str(i)+".pth")
 
 	thisdict = PerformElimination(thisdict)
 	thisdict = PerformCloning(thisdict)
@@ -161,7 +209,7 @@ while(epoch < 20):
 	for net in thisdict.keys():
 		print(net.name)
 	print("__________________")
-	
+
 
 
 print("NAMES Post")
@@ -169,5 +217,5 @@ for net in thisdict.keys():
 	print(net.name)
 
 
-	
+
 
