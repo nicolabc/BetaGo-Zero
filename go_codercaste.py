@@ -574,8 +574,10 @@ def main():
         print('x wins')
     else:
         print('tie')
+
 def selectmoveForNetwork(xoro):
     global boardsize
+    global gsf
     hold = 1
     while hold == 1:
  
@@ -609,6 +611,12 @@ def selectmoveForNetwork(xoro):
             print('invalid')
         else:
             hold = 0
+    ## Places the piece on the 'future' board, the board
+    ## used to test if a move is valid
+    if xoro == 'o':
+        gsf[y][x] = 'o'
+    else:
+        gsf[y][x] = 'x'
     return [x,y]
 def playFullGame(net1,net2,printProgress):
     """
@@ -694,7 +702,9 @@ def playFullGame(net1,net2,printProgress):
                 xy = unflatten(myMove)          #Returns list in [x,y]-coordinates
                 
             isLegalMove = networkTurn(xy)
-            if(isLegalMove == False):
+            
+            #Remove proposed move from the list and check if the network is being played manually
+            if(isLegalMove == False and net1 != False):
                 moves[myMove]=smallestVal   #To ensure that argmax does not select this illegal move once again
         if(printProgress):    
             print('o selects: ',xy)
@@ -732,7 +742,9 @@ def playFullGame(net1,net2,printProgress):
                 xy = unflatten(myMove)          #Returns list in [x,y]-coordinates
             
             isLegalMove = networkTurn(xy)
-            if(isLegalMove == False):
+
+            #Remove proposed move from the list and check if the network is being played manually
+            if(isLegalMove == False and net2 != False):#Remove proposed move from the list and check if the network is being played manually
                 moves[myMove]=smallestVal   #To ensure that argmax does not select this illegal move once again
         if(printProgress):
             print('x selects: ',xy)
@@ -808,8 +820,10 @@ def networkTurn(xy):
     elif gsc[y][x] != '-': #If the move tries to put a stone on a nonempty region, this is by definition againts the rules
         legalMove = 0
     else:
-        player1_pass = 0
-        player2_pass = 0
+        if xoro == 'o':
+            player1_pass = 0
+        else:
+            player2_pass = 0
         prev_o_groups = deepcopy(o_groups)
         prev_x_groups = deepcopy(x_groups)
         prev_non_groups = deepcopy(non_groups)
