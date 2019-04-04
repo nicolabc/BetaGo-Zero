@@ -159,7 +159,11 @@ print(won1, "  ", won2)
 '''
 
 #thisdict = InitializeNetworks(10)
-
+'''net = network.Network()
+net.mynet.load_state_dict(torch.load("saves/net0.pth"))
+net.initForMatch(True)
+go.playFullGame(net,False,True)
+'''
 thisdict = LoadNetworks(10,1)
 #print(len(thisdict))
 
