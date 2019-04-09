@@ -38,6 +38,13 @@ def LoadNetworks(loadAmount,cloneFactor):
 			networkdict[cloneModel] = 0.0
 	return networkdict
 
+def LoadValidationNet():
+	net = network.Network()
+	net.mynet = network.TwoLayerNet()
+	net.mynet.load_state_dict(torch.load("saves2/net0.pth"))
+	net.mynet.eval()
+
+	return net
 
 #Play a game between two networks
 #returns 1,0 of 1 won and 0,1 if 2 won
@@ -48,14 +55,14 @@ def PlayOneGame(network1,network2,pringProgress):
 	#plays one game, call here, get results 
 	#print("PLAYING : ",network1.name," VS ",network2.name)
 	n1won,n2won = go.playFullGame(network1,network2,pringProgress)
-	
+	'''
 	if(n1won>n2won):
 		n1won = 1
 		n2won = 0
 	else:
 		n1won = 0
 		n2won = 1
-	
+	'''
 	return n1won,n2won
 	
 #Plays all networks against one another
@@ -72,7 +79,28 @@ def PlayAll(networkdict):
 				networkdict[net2]+=n2won
 	return networkdict
 
+def PlayAllValidation(networkdict,validationNet):
+	networks = networkdict.keys()
+	average = 0
+	for net in networks:
+		n1won,n2won = PlayOneGame(net,validationNet,False)
+		networkdict[net]+=n1won
+		average+=n1won
+		n1won,n2won = PlayOneGame(validationNet,net,False)
+		networkdict[net]+=n2won
+		average+=n2won
 
+	#computes average
+	average = average/(2.0*len(networkdict))
+	f= open("validation.txt","a+")
+	f.write(str(average)+'\n')
+	f.close()
+
+	print("_______________AVERAGE_______________")
+	print(average)
+	print("_____________________________________")
+
+	#return networkdict
 
 #Eliminates 50% of the networks
 #those chosen to be eliminated are based on a formula
@@ -158,13 +186,9 @@ print("RESULT")
 print(won1, "  ", won2)
 '''
 
-#thisdict = InitializeNetworks(10)
-'''net = network.Network()
-net.mynet.load_state_dict(torch.load("saves/net0.pth"))
-net.initForMatch(True)
-go.playFullGame(net,False,True)
-'''
-thisdict = LoadNetworks(10,1)
+thisdict = InitializeNetworks(10)
+
+#thisdict = LoadNetworks(5,0)
 #print(len(thisdict))
 
 networks = list(thisdict.keys())
@@ -181,9 +205,13 @@ for net in thisdict.keys():
 epoch = 0
 grandEpoch = 0
 print("TRAINING")
+
+validationNet = LoadValidationNet()
+
 while(epoch < 20):
 	
 	thisdict = PlayAll(thisdict)
+	#PlayAllValidation(thisdict,validationNet)
 	print("CURRENT EPOCH ",grandEpoch)
 	print("SCORES ")
 	for net in thisdict.keys():
@@ -191,17 +219,18 @@ while(epoch < 20):
 	print("__________________")
 
 	if(epoch >= 5):
+		PlayAllValidation(thisdict,validationNet)
 		print("SAMPLE")
 		networks = list(thisdict.keys())	
 		keydict = dict(zip(networks, thisdict.values()))
 		networks.sort(key=keydict.get)
 		networks.reverse()
-		PlayOneGame(networks[0],networks[1],True)
+		PlayOneGame(networks[0],validationNet,True)
 		print("SAMPLE")
-		PlayOneGame(networks[1],networks[0],True)
+		PlayOneGame(validationNet,networks[0],True)
 		epoch = 0
 		for i in range(0,len(networks)):
-			torch.save(networks[i].mynet.state_dict(), "saves2/net"+str(i)+".pth")
+			torch.save(networks[i].mynet.state_dict(), "saves3/net"+str(i)+".pth")
 
 	thisdict = PerformElimination(thisdict)
 	thisdict = PerformCloning(thisdict)

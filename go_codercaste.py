@@ -462,9 +462,23 @@ def checkForSuicide(xoro):
     global o_groups
     global x_groups
     global gsf
+    global gsc
     global restore_o
     global restore_x
     global edited
+    prevCount = 0
+    newCount = 0
+    for x in gsf:
+        for y in x:
+            newCount+=(y==xoro)
+    for x in gsc:
+        for y in x:
+            prevCount+=(y==xoro)
+
+    if(prevCount>newCount):
+        return 1
+    else:
+        return 0        
     if xoro == 'x':
         groups = x_groups
         otherplayer = 'o'
@@ -502,7 +516,7 @@ def main():
     global gameover
     ## Game State Future, same setup as gsc, used for testing the
     ## waters of a new move, to see if that move is valid, before
-    ## gsc is edited to reflect that move
+    ## gsc is edited to reflect that move3
     global gsf
     ## Two-dimensional lists, the higher dimension being groups, the
     ## lower dimension being lists of board positions in a particular
@@ -575,55 +589,12 @@ def main():
     else:
         print('tie')
 
-def selectmoveForNetwork(xoro):
-    global boardsize
-    global gsf
-    hold = 1
-    while hold == 1:
- 
-        minihold = 1
-        while minihold == 1:
-            pp = input('Place or pass (l/a)? ')
-            if pp == 'a':
-                return [0,boardsize]
-            elif pp == 'l':
-                minihold = 0
-                ## This try...except ensures that the user
-                ## inputs only numbers
-                error = 0
-                try:
-                    x = int(input('x: '))
-                except ValueError:
-                    error = 1
-                try:
-                    y = int(input('y: '))
-                except ValueError:
-                    error = 1
-                if error == 1:
-                    minihold = 1
-                    print('invalid')
-            else:
-                print('invalid')
-        ## Ensures that the input is on the board
-        if (x > boardsize) | (x < 0) | (y > boardsize) | (y < 0):
-            print('invalid')
-        elif gsc[y][x] != '-':
-            print('invalid')
-        else:
-            hold = 0
-    ## Places the piece on the 'future' board, the board
-    ## used to test if a move is valid
-    if xoro == 'o':
-        gsf[y][x] = 'o'
-    else:
-        gsf[y][x] = 'x'
-    return [x,y]
 def playFullGame(net1,net2,printProgress):
     """
     Plays an entire game for network architecture 1 and 2 
     and returns a value stating which network won
     """
-    komi = 7.5  #The advantage of starting the game
+    komi = 7.5
     ## Either 'o' or 'x', determines who's turn it is
     global xoro
     ## The opposite of xoro, determines who's turn it is not
@@ -676,6 +647,8 @@ def playFullGame(net1,net2,printProgress):
     ## the other)
     p1Passed = False
     p2Passed = False
+
+    turnsCount = 0
     while gameover != 1:
         
  
@@ -688,33 +661,26 @@ def playFullGame(net1,net2,printProgress):
             printboard(gsc)
 
         isLegalMove = 0
+        nrOfTries = 0
         if(printProgress):
             print("o is thinking [...]")
-        if net1 == False:   #If no network is given, an input is expected
-            xy = selectmoveForNetwork(xoro)
-        else:
-            moves = net1.forwardPass(gsc)
-            moves = moves[0]
-            smallestVal = moves[np.argmin(moves)]-1000000
+        moves = net1.forwardPass(gsc)
+        moves = moves[0]
+        smallestVal = moves[np.argmin(moves)]-1000000
         while(isLegalMove==0):
-            if net1 != False:
-                myMove = np.argmax(moves) #<-- Change to this when changed to list
-                xy = unflatten(myMove)          #Returns list in [x,y]-coordinates
-                
+            myMove = np.argmax(moves) #<-- Change to this when changed to list
+            xy = unflatten(myMove)          #Returns list in [x,y]-coordinates
             isLegalMove = networkTurn(xy)
-            
-            #Remove proposed move from the list and check if the network is being played manually
-            if(isLegalMove == False and net1 != False):
-                moves[myMove]=smallestVal   #To ensure that argmax does not select this illegal move once again
+            if(isLegalMove == False):
+                moves[myMove]=smallestVal
         if(printProgress):    
             print('o selects: ',xy)
-        if(xy == [0,boardsize]):
+        if(xy == [0,9]):
             p1Passed = True
         else:
             p1Passed = False
-                         
-        if net1 != False:
-            net1.updateBoard(gsc)           #Updates the board history
+                         #Place the turn at [x,y]
+        net1.updateBoard(gsc)           #Updates the board history
 
         if gameover == 1 or (p1Passed and p2Passed):
             gameover = 1
@@ -728,38 +694,36 @@ def playFullGame(net1,net2,printProgress):
             printboard(gsc)
 
         isLegalMove = 0
+        nrOfTries = 0
         if(printProgress):
             print("x is thinking [...]")
-        if net2 == False:
-            xy = selectmoveForNetwork(xoro) #If no network is given, an input is expected
-        else:
-            moves = net2.forwardPass(gsc)
-            moves = moves[0]
-            smallestVal = moves[np.argmin(moves)]-1000000
+        moves = net2.forwardPass(gsc)
+        moves = moves[0]
+        smallestVal = moves[np.argmin(moves)]-1000000
         while(isLegalMove==0):
-            if net2 != False:
-                myMove = np.argmax(moves) #<-- Change to this when changed to list
-                xy = unflatten(myMove)          #Returns list in [x,y]-coordinates
-            
+            myMove = np.argmax(moves) #<-- Change to this when changed to list
+            xy = unflatten(myMove)          #Returns list in [x,y]-coordinates
             isLegalMove = networkTurn(xy)
-
-            #Remove proposed move from the list and check if the network is being played manually
-            if(isLegalMove == False and net2 != False):#Remove proposed move from the list and check if the network is being played manually
-                moves[myMove]=smallestVal   #To ensure that argmax does not select this illegal move once again
+            if(isLegalMove == False):
+                moves[myMove]=smallestVal
         if(printProgress):
             print('x selects: ',xy)
-        if(xy == [0,boardsize]):
+
+        net2.updateBoard(gsc)
+
+        if(xy == [0,9]):
             p2Passed = True
         else:
             p2Passed = False
-        
-        if net2 != False:
-            net2.updateBoard(gsc)
 
         if gameover == 1 or (p1Passed and p2Passed):
             gameover = 1
-            break           
-        
+            break           #Updates the board history
+        turnsCount+=1
+
+        if(turnsCount>200):
+            gameover = 1
+            break
     ## Counts the score of both players
     count()
     if(printProgress):
@@ -769,7 +733,11 @@ def playFullGame(net1,net2,printProgress):
         printboard(gsc)
         print()
     
-    ## Determines the winner, remember that o started and therefore has an advantage. This is solved by using a 'komi'
+    if(turnsCount>200):
+        print("Infinite game")
+        return [-100,-100]
+
+    ## Determines the winner
     if o_points-komi > x_points:
         print('o wins')
     elif x_points > o_points-komi:
@@ -785,7 +753,6 @@ def playFullGame(net1,net2,printProgress):
     print('x points: ',str(x_points))
     return [o_points-komi,x_points]
 
-#Unflattens the move to [x,y]-coordinates
 def unflatten(i):
     x = i % boardsize    # % is the "modulo operator", the remainder of i / boardsize;
     y = int(i / boardsize)    # where "/" is an integer division
@@ -808,6 +775,7 @@ def networkTurn(xy):
     global o_groups
     global x_groups
     global non_groups
+    global edited
     legalMove = 0
     x,y = xy
     if y == boardsize:  #If the y coordinate is boardsize, then we know that this is the nxn+1 move, which is pass
@@ -820,10 +788,13 @@ def networkTurn(xy):
     elif gsc[y][x] != '-': #If the move tries to put a stone on a nonempty region, this is by definition againts the rules
         legalMove = 0
     else:
-        if xoro == 'o':
-            player1_pass = 0
+        if(xoro == 'o'):
+            gsf[y][x] = 'o'
         else:
-            player2_pass = 0
+            gsf[y][x] = 'x'
+
+        player1_pass = 0
+        player2_pass = 0
         prev_o_groups = deepcopy(o_groups)
         prev_x_groups = deepcopy(x_groups)
         prev_non_groups = deepcopy(non_groups)
@@ -846,7 +817,9 @@ def networkTurn(xy):
             restore_o = []
             restore_x = []
             capture(xoro)
-            
+            capture(notxoro)
+            #if(edited == 1):
+                #print("CAPTURED")
             if edited == 0:
                 minihold = 0
                 edited = 0
@@ -861,6 +834,10 @@ def networkTurn(xy):
             if goodmove() == 1:
                 #This means that the move increases the number of the player's stone
                 legalMove = 1
+                #print("LEGAL",x," ",y)
+                #print("_____________________________________________")
+                #printboard(gsc)
+                #print("_____________________________________________")
                     
             ## If the move is invalid, the captured groups need
             ## to be returned to the board, so we use
@@ -868,13 +845,20 @@ def networkTurn(xy):
             ## restore the o_ and x_groups lists.
             else:
                 #print('invalid move - returns board to a previous state')
+                #print("ILLEGAL 1 ",x," ",y)
                 o_groups = deepcopy(prev_o_groups)
                 x_groups = deepcopy(prev_x_groups)
                 non_groups = deepcopy(prev_non_groups)
                 gsf = deepcopy(gsc)
+                #print("_____________________________________________")
+                #printboard(gsc)
+
+                #print("_____________________________________________")
                 legalMove = 0
+                
         else:
             #print('invalid move - suicide')
+            #print("ILLEGAL 2",x," ",y)
             o_groups = deepcopy(prev_o_groups)
             x_groups = deepcopy(prev_x_groups)
             non_groups = deepcopy(prev_non_groups)
@@ -885,7 +869,7 @@ def networkTurn(xy):
         gameover = 1
     return legalMove
 
-'''# Check if the move xy is legal
+# Check if the move xy is legal
 def checkIfLegal(xy):
     
     x,y = xy
@@ -926,7 +910,6 @@ def checkIfLegal(xy):
         for group in restore_x:
             x_groups.append(group)
         return 0
-'''
 '''
 class Network:
     def __init__(self, boardsize):
