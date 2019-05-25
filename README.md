@@ -1,16 +1,16 @@
-#Go :o::x::o::x:
+# Go
 
-Final project in TDT4265 - Computer Vison and Deep Learning at NTNU using Reinforcement Learning to train an AI to play the game of Go on a 9x9 board.
-See https://en.wikipedia.org/wiki/Go_(game)
+Final project in TDT4265 - Computer Vison and Deep Learning at NTNU using Deep Reinforcement Learning to train an AI to play the game of Go on a 9x9 board. The rules used in the implementation is Chinese rules, also known as area rules
+See the [wikipage](https://en.wikipedia.org/wiki/Go_(game)) for more info
 
 <a href="url"><img src="https://www.schaakengo.nl/images/productimages/big/beuken-vineer-9x9-2-.jpg" height="450" width="450" ></a>
 
-> PLease have a look at the PDF files [TDT4265_Final_project_proposal.pdf](TDT4265_Final_project_proposal.pdf) and [Learning to play Go - Final presentation.pdf](https://github.com/nicolabc/Go/blob/master/Learning%20to%20play%20Go%20-%20Final%20presentation.pdf) to see our final results
+> Please have a look at the PDF files [TDT4265_Final_project_proposal.pdf](TDT4265_Final_project_proposal.pdf) and [Learning to play Go - Final presentation.pdf](https://github.com/nicolabc/Go/blob/master/Learning%20to%20play%20Go%20-%20Final%20presentation.pdf) to see our final results
 
 You may read the other suggested final projects for the course [here](https://www.overleaf.com/read/xgqfysbtbcpd)
 
 ## Motivation
-The motivation behind the project is the recent advancement of AI using Reinforcement Learning, and specially the AlphaGo and AlphaGo Zero created by Google DeepMind . Read more about their projects [here](https://deepmind.com/blog/alphago-zero-learning-scratch/)
+The motivation behind the project is the recent advancement of AI using Reinforcement Learning, and specially the AlphaGo and AlphaGo Zero created by Google DeepMind. The [documentary](https://www.youtube.com/watch?v=8tq1C8spV_g) also contributed to the motivation behind the project. Read more about Google DeepMind's AlphaGo Zero project [here](https://deepmind.com/blog/alphago-zero-learning-scratch/)
 
 ## Module description
 Environment: `Python3` `Pytorch`
@@ -53,8 +53,7 @@ from forward pass function, it will choose the legal move with the highest value
 When the game is done,
 score is calculated and returned along with the number of turns played.
 
-NOTE!
-
+>NOTE!
 This script go_codercaste.py was found online and was heavily modified to fit with our other scritps.
 As such, it is a bit messy. 
 Source: http://www.codercaste.com/2013/02/22/read-set-go-how-to-create-a-go-board-game-in-python/
@@ -66,4 +65,4 @@ Nicolas B. Carbone – [@LinkedIn](https://www.linkedin.com/in/nicolas-blystad-c
 Distributed under the MIT license. See ``LICENSE`` for more information.
 
 ## Credits
-Credits goes to my partner for the project [Seva Karpov](https://www.facebook.com/seva.karpov.7) 
+Credits goes to my partner for the project [Seva Karpov](https://www.facebook.com/seva.karpov.7) - [GitHub](https://github.com/SevaKarpov)
