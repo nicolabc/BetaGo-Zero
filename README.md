@@ -1,6 +1,6 @@
 # Go
 
-Final project in TDT4265 - Computer Vison and Deep Learning at NTNU using Deep Reinforcement Learning to train an AI to play the game of Go on a 9x9 board. The rules used in the implementation is Chinese rules, also known as area rules
+Final project in TDT4265 - Computer Vison and Deep Learning at NTNU using Deep Reinforcement Learning with Genetic Algorithm to train an AI to play the game of Go on a 9x9 board. The rules used in the implementation is Chinese rules, also known as area rules
 See the [wikipage](https://en.wikipedia.org/wiki/Go_(game)) for more info
 
 <a href="url"><img src="https://www.schaakengo.nl/images/productimages/big/beuken-vineer-9x9-2-.jpg" height="450" width="450" ></a>
